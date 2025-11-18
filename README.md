@@ -1,0 +1,37 @@
+# Randomized Experiments Lab
+
+A modular Flask app for visualizing randomized algorithms. Each experiment lives in its own module with a consistent controller/simulation/visualization split.
+
+## Quick start
+
+1. **Install deps**
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+2. **Run locally**
+   ```bash
+   flask --app app run --debug
+   ```
+3. **Docker**
+   ```bash
+   docker build -t randomized-lab .
+   docker run -p 8000:8000 randomized-lab
+   ```
+
+## Current modules
+- **Phase Transition (G(n, p))** – Sweeps edge probability to show Erdős–Rényi phase transitions and statistics.
+- **Edge Process (G(n, m))** – Adds random edges one by one to map m onto the equivalent G(n, p) thresholds.
+- **Monte Carlo Union of Rectangles** – Estimates the area of overlapping rectangles via sampling while displaying the disjoint \(B_i\) slices.
+
+## Module structure
+Each experiment (e.g., `phase_transition`, `g_nm`, `monte_carlo_union`) contains:
+
+- `simulation.py`: pure generation logic (graphs, statistics, Monte Carlo runs).
+- `controller.py`: parses form inputs, orchestrates the simulation, prepares template context.
+- `visualization.py`: builds Plotly figures (HTML/JS) rendered by the presentation layer.
+
+Shared utilities (graph stats, module registry) live under `app/modules/common`. Templates under `app/presentation/templates` provide server-rendered views.
+
+See `docs/modules/` for detailed module guides.
