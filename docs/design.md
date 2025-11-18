@@ -109,6 +109,13 @@
 - Shared utilities (e.g., RNG helpers, caching layout positions) live in `modules/common`.
 - Future experiments can focus on other randomized algorithms (Monte Carlo integration, randomized sorting, percolation) by adding new subpackages under `/modules`.
 
+## Module Guides
+Each experiment has a dedicated guide detailing parameters, outputs, and future ideas:
+
+- [Phase Transition (G(n, p))](modules/phase_transition.md)
+- [Edge Process (G(n, m))](modules/g_nm.md)
+- [Monte Carlo Union of Rectangles](modules/union_area.md)
+
 ## Delivery Plan
 1. Scaffold Flask project structure with presentation + modules directories.
 2. Implement module registry + landing page.
