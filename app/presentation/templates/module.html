@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% set params = result.parameters %}
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <div>
+    <p class="text-uppercase text-muted mb-1">Experiment</p>
+    <h1 class="h3 mb-0">{{ module.name }}</h1>
+    <p class="text-muted">{{ module.description }}</p>
+    {% if module.slug == 'phase-transition' %}
+      <div class="alert alert-light border mt-3 mb-0">
+        <p class="mb-1"><strong>Erdős–Rényi G(n, p):</strong> start with n isolated vertices. Every possible edge appears independently with probability p, so sweeping p from 0 to 1 reveals phase transitions such as the birth of cycles, emergence of a giant component, and full connectivity.</p>
+        <p class="mb-0 text-muted small">
+          Parameters: `n_vertices` sets n, `p_start`/`p_end`/`p_step` define the probability sweep, `Speed (ms)` controls animation speed, and `Seed` fixes the RNG so runs are reproducible.
+        </p>
+      </div>
+    {% elif module.slug == 'gnm' %}
+      <div class="alert alert-light border mt-3 mb-0">
+        <p class="mb-1"><strong>Erdős–Rényi G(n, m):</strong> begin with n isolated vertices and add edges in a random order until exactly m have been inserted. This exposes the discrete edge-addition process that mirrors G(n, p) at matching densities.</p>
+        <p class="mb-0 text-muted small">
+          Parameters: choose `n_vertices`, target `edge_count` m, animation `Speed (ms)`, and optional `Seed` for reproducibility.
+        </p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-header fw-semibold">Parameters</div>
+  <div class="card-body">
+    <form method="post" id="experiment-form">
+      <div class="row g-3 align-items-end">
+        <div class="col-6 col-lg-2">
+          <label class="form-label">Number of vertices</label>
+          <input class="form-control" type="number" name="n_vertices" min="1" value="{{ params.n_vertices }}">
+          {% if result.errors.n_vertices %}<div class="text-danger small">{{ result.errors.n_vertices }}</div>{% endif %}
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label">p start</label>
+          <input class="form-control" type="number" name="p_start" step="0.001" value="{{ params.p_start }}">
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label">p end</label>
+          <input class="form-control" type="number" name="p_end" step="0.001" value="{{ params.p_end }}">
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label">p step</label>
+          <input class="form-control" type="number" name="p_step" step="0.001" value="{{ params.p_step }}">
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label">Speed (ms)</label>
+          <input class="form-control" type="number" name="playback_speed_ms" min="100" step="50" value="{{ params.playback_speed_ms }}">
+        </div>
+        <div class="col-6 col-lg-1">
+          <label class="form-label">Seed</label>
+          <input class="form-control" type="number" name="seed" value="{{ params.seed or '' }}">
+        </div>
+        <div class="col-12 col-lg-1">
+          <button class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2" type="submit" id="run-button">
+            <span>Run</span>
+            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="experiment-spinner"></span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-9">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        {% if result.plot_html %}
+          {{ result.plot_html | safe }}
+        {% else %}
+          <div class="text-center text-muted py-5">
+            Submit the form to generate the animation.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if result.timeline %}
+      <div class="card shadow-sm mt-3">
+        <div class="card-header fw-semibold">Statistics per probability</div>
+        <div class="table-responsive stats-scroll">
+          <table class="table table-sm mb-0">
+            <thead>
+              <tr>
+                <th>p</th>
+                <th>Largest component</th>
+                <th># Components</th>
+                <th>Triangles</th>
+                <th>Connected?</th>
+                <th>Avg degree</th>
+                <th>Isolated vertices</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for state in result.timeline %}
+                <tr>
+                  <td>{{ '%.3f'|format(state.p) }}</td>
+                  <td>{{ state.largest_component_size }}</td>
+                  <td>{{ state.component_count }}</td>
+                  <td>{{ state.triangle_count }}</td>
+                  <td>{{ 'Yes' if state.is_connected else 'No' }}</td>
+                  <td>{{ state.average_degree }}</td>
+                  <td>{{ state.isolated_vertices }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-3">
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold">Phase transitions</div>
+      <div class="card-body">
+        <h6 class="fw-semibold small text-uppercase text-muted">Observed</h6>
+        {% if result.event_estimates %}
+          <div class="table-responsive">
+            <table class="table table-sm mb-3">
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th>Theoretical</th>
+                  <th>Observed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for event in result.event_estimates %}
+                  <tr>
+                    <td>{{ event.label }}</td>
+                    <td>{{ '%.3f'|format(event.theoretical_p) if event.theoretical_p is not none else '—' }}</td>
+                    <td>{{ '%.3f'|format(event.observed_p) if event.observed_p is not none else '—' }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted">Run the experiment to compute observed thresholds.</p>
+        {% endif %}
+
+        <h6 class="fw-semibold small text-uppercase text-muted mt-4">Theoretical markers</h6>
+        {% if result.markers %}
+          <ul class="list-unstyled mb-0">
+            {% for marker in result.markers %}
+              <li class="mb-2">
+                <span class="badge rounded-pill" style="background-color: {{ module.accent_color }};">p = {{ marker.p }}</span>
+                <span class="ms-2 text-muted">{{ marker.label }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted mb-0">Markers will appear after running the experiment.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('experiment-form');
+    const spinner = document.getElementById('experiment-spinner');
+    const runButton = document.getElementById('run-button');
+    if (!form || !spinner || !runButton) return;
+    form.addEventListener('submit', function () {
+      spinner.classList.remove('d-none');
+      runButton.disabled = true;
+    });
+  });
+</script>
+{% endblock %}

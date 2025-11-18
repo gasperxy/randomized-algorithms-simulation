@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="mb-4 p-4 bg-light border rounded-4">
+  <div class="row align-items-center">
+    <div class="col-lg-8">
+      <h1 class="display-5 fw-semibold">Randomized Experiments</h1>
+      <p class="lead">A playground for exploring randomized structures and algorithms from across computer science. Browse topics, launch experiments, and see how randomness drives behavior.</p>
+    </div>
+  </div>
+</section>
+
+{% set topics = [
+  {
+    "title": "Random Graphs",
+    "description": "Compare different Erdős–Rényi models and watch phase transitions emerge as edges arrive or probabilities rise.",
+    "experiments": [
+      modules|selectattr("slug", "equalto", "phase-transition")|first,
+      modules|selectattr("slug", "equalto", "gnm")|first
+    ]|select
+  },
+  {
+    "title": "Monte Carlo & Approximation",
+    "description": "Union-area estimators today, ε-δ approximations tomorrow.",
+    "experiments": [
+      modules|selectattr("slug", "equalto", "union-area")|first
+    ]|select
+  }
+] %}
+
+<section>
+  <h2 class="h4 mb-3">Topics</h2>
+  <div class="row g-3">
+    {% for topic in topics %}
+      <div class="col-md-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <h3 class="h5 mb-2">{{ topic.title }}</h3>
+            <p class="text-muted">{{ topic.description }}</p>
+            {% if topic.experiments %}
+              <div class="list-group list-group-flush mt-3">
+                {% for exp in topic.experiments %}
+                  <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" href="{{ url_for('pages.experiment', slug=exp.slug) }}">
+                    <span>
+                      <span class="badge rounded-pill me-2" style="background-color: {{ exp.accent_color }};">&nbsp;</span>
+                      {{ exp.name }}
+                    </span>
+                    <span class="text-muted small">Launch</span>
+                  </a>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="text-muted fst-italic mb-0">Experiments forthcoming.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
