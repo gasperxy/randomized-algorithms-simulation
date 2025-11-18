@@ -89,7 +89,7 @@ def _state_traces(graph, positions, accent_color: str):
         hoverinfo="text",
         text=text,
         marker=dict(
-            size=7,
+            size=9,
             color=colors,
             line=dict(width=1, color="#111827"),
         ),
@@ -134,15 +134,16 @@ def build_animation(
         xaxis=dict(showgrid=False, zeroline=False, visible=False),
         yaxis=dict(showgrid=False, zeroline=False, visible=False),
         margin=dict(l=10, r=10, t=50, b=10),
+        height=620,
         hovermode="closest",
         updatemenus=[
             dict(
                 type="buttons",
                 direction="left",
                 pad=dict(r=10, t=10),
-                x=0.02,
+                x=0.0,
                 xanchor="left",
-                y=-0.8,
+                y=-0.25,
                 bgcolor="#0d6efd",
                 bordercolor="#0d6efd",
                 font=dict(color="#ffffff", family="system-ui, -apple-system"),
@@ -172,7 +173,7 @@ def build_animation(
         sliders=[
             dict(
                 active=0,
-                pad=dict(t=70),
+                pad=dict(t=10),
                 currentvalue=dict(prefix="p = "),
                 bgcolor="#f8f9fa",
                 bordercolor="#dee2e6",

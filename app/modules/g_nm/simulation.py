@@ -83,7 +83,7 @@ def compute_layouts(
             pos = nx.spring_layout(graph, seed=base_seed, k=0.4)
         else:
             pos = nx.spring_layout(
-                graph, seed=base_seed + idx, k=0.4, pos=previous_pos, iterations=iterations
+                graph, seed=base_seed + idx, gravity=0.2, method="auto", pos=previous_pos, iterations=iterations
             )
 
         cleaned = {node: coords.tolist() for node, coords in pos.items()}

@@ -72,7 +72,8 @@ def compute_layouts(
                 seed=base_seed + idx,
                 pos=previous_pos,
                 iterations=iterations,
-                gravity=0.3
+                gravity=0.2,
+                method="auto"
             )
 
         cleaned = {node: coords.tolist() for node, coords in computed.items()}

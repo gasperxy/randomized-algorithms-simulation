@@ -144,16 +144,18 @@ def build_animation(rectangles, components, states, accent_color: str, frame_dur
     base_fig.frames = frames
     base_fig.update_layout(
         title="Monte Carlo union area sampling",
-        xaxis=dict(scaleanchor="y", scaleratio=1),
+        xaxis=dict(scaleanchor="y", scaleratio=1,  range=[0, max(rect.x2 for rect in rectangles) * 1.05]),
+        yaxis=dict(range=[0, max(rect.y2 for rect in rectangles) * 1.05]),
         margin=dict(l=10, r=10, t=60, b=10),
+        height=620,
         updatemenus=[
             dict(
                 type="buttons",
                 direction="left",
                 pad=dict(r=10, t=10),
-                x=0.02,
+                 x=0.0,
                 xanchor="left",
-                y=-0.8,
+                y=-0.25,
                 bgcolor="#0d6efd",
                 bordercolor="#0d6efd",
                 font=dict(color="#ffffff", family="system-ui, -apple-system"),
@@ -182,7 +184,7 @@ def build_animation(rectangles, components, states, accent_color: str, frame_dur
         sliders=[
             dict(
                 active=0,
-                pad=dict(t=40),
+                pad=dict(t=10),
                 currentvalue=dict(prefix="Sample "),
                 steps=slider_steps,
             )
