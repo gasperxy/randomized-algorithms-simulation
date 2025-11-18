@@ -2,12 +2,17 @@
 
 A modular Flask app for visualizing randomized algorithms. Each experiment lives in its own module with a consistent controller/simulation/visualization split.
 
+
+Try it out:
+
+[![Live Demo](https://img.shields.io/badge/Azure-Live%20App-blue?logo=microsoft-azure)](https://randomized-algorithm-simulator-ehbrb2c7fde0eqgr.germanywestcentral-01.azurewebsites.net/)
+
 ## Quick start
 
-1. **Install deps**
+1. **Create virtual environment and install dependencies**
    ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
+   python3 -m venv venv
+   source venv/bin/activate
    pip install -r requirements.txt
    ```
 2. **Run locally**
