@@ -23,10 +23,12 @@ def _load_default_modules() -> None:
     from .phase_transition import MODULE_META as phase_transition_meta
     from .g_nm import MODULE_META as gnm_meta
     from .monte_carlo_union import MODULE_META as union_area_meta
+    from .monte_carlo_ln2 import MODULE_META as ln2_meta
 
     register_module(phase_transition_meta)
     register_module(gnm_meta)
     register_module(union_area_meta)
+    register_module(ln2_meta)
 
 
 def register_module(metadata: ModuleMetadata) -> None:

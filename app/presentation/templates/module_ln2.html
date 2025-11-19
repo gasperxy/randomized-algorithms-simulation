@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% set params = result.parameters %}
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <div>
+    <p class="text-uppercase text-muted mb-1">Experiment</p>
+    <h1 class="h3 mb-0">{{ module.name }}</h1>
+    <p class="text-muted">Estimate \(\ln(2)\) by averaging 1/x samples drawn uniformly from [1, 2].</p>
+    <div class="alert alert-light border mt-3 mb-0">
+      <p class="mb-1">Sampling x ∈ [1, 2] uniformly and averaging 1/x approximates the integral of 1/x over that interval, which equals ln(2). This experiment shows how quickly the Monte Carlo estimate converges.</p>
+      <p class="text-muted small mb-0">Parameters: choose the number of samples to draw and optionally fix the RNG seed.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-header fw-semibold">Parameters</div>
+  <div class="card-body">
+    <form method="post" id="experiment-form">
+      <div class="row g-3">
+        <div class="col-6 col-lg-3">
+          <label class="form-label">Samples</label>
+          <input class="form-control" type="number" min="10" max="100000" name="samples" value="{{ params.samples }}">
+        </div>
+        <div class="col-6 col-lg-3">
+          <label class="form-label">Seed (optional)</label>
+          <input class="form-control" type="number" name="seed" value="{{ params.seed or '' }}">
+        </div>
+      </div>
+      <button class="btn btn-primary mt-3 d-flex align-items-center gap-2" type="submit" id="run-button">
+        <span>Run sampling</span>
+        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="experiment-spinner"></span>
+      </button>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-header fw-semibold">Convergence</div>
+  <div class="card-body">
+    {% if result.plot_html %}
+      {{ result.plot_html | safe }}
+    {% else %}
+      <div class="text-center text-muted py-4">Submit the form to run the estimator.</div>
+    {% endif %}
+  </div>
+</div>
+
+{% if result.timeline %}
+<div class="card shadow-sm">
+  <div class="card-header fw-semibold">Summary</div>
+  <div class="card-body">
+    <p class="mb-1"><strong>Samples:</strong> {{ result.parameters.samples }}</p>
+    <p class="mb-1"><strong>Final estimate:</strong> {{ '%.6f'|format(result.final_estimate) }}</p>
+    <p class="mb-1"><strong>True ln(2):</strong> {{ '%.6f'|format(result.true_value) }}</p>
+    <p class="mb-0"><strong>Absolute error:</strong> {{ '%.6f'|format(result.absolute_error) }}</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('experiment-form');
+    const spinner = document.getElementById('experiment-spinner');
+    const runButton = document.getElementById('run-button');
+    if (!form || !spinner || !runButton) return;
+    form.addEventListener('submit', function () {
+      spinner.classList.remove('d-none');
+      runButton.disabled = true;
+    });
+  });
+</script>
+{% endblock %}

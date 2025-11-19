@@ -115,6 +115,7 @@ Each experiment has a dedicated guide detailing parameters, outputs, and future 
 - [Phase Transition (G(n, p))](modules/phase_transition.md)
 - [Edge Process (G(n, m))](modules/g_nm.md)
 - [Monte Carlo Union of Rectangles](modules/union_area.md)
+- [Monte Carlo ln(2)](modules/ln2.md)
 
 ## Delivery Plan
 1. Scaffold Flask project structure with presentation + modules directories.
