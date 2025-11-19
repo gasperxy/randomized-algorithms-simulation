@@ -9,6 +9,7 @@ from . import simulation, visualization
 
 @dataclass
 class PhaseTransitionForm:
+    """Defaults used when the experiment auto-runs."""
     n_vertices: int = 30
     p_start: float = 0.0
     p_end: float = 0.1
@@ -22,6 +23,7 @@ def default_parameters() -> Dict:
 
 
 def _parse_int(value: str, fallback: int) -> int:
+    """Parse integers from user input, falling back on invalid data."""
     try:
         return int(value)
     except (TypeError, ValueError):
@@ -36,6 +38,7 @@ def _parse_float(value: str, fallback: float) -> float:
 
 
 def parse_form(data: Mapping[str, str]) -> Tuple[PhaseTransitionForm, Dict[str, str]]:
+    """Clamp and validate form data before the simulation runs."""
     defaults = PhaseTransitionForm()
     errors: Dict[str, str] = {}
 

@@ -40,6 +40,7 @@ def _node_colors(graph, node_order, accent_color):
 
 
 def build_animation(states: Sequence[Dict], positions_per_state: Sequence[Dict], accent_color, frame_duration_ms: int):
+    """Render the edge-addition animation and attach slider metadata."""
     if not states:
         return {"plot_html": ""}
 

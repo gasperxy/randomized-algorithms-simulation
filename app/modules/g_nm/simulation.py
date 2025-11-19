@@ -18,6 +18,7 @@ class SimulationParameters:
 
 
 def _generate_edge_sequence(n_vertices: int, seed: int | None = None) -> List[tuple[int, int]]:
+    """Precompute all possible edges and shuffle them to obtain the m-order."""
     nodes = range(n_vertices)
     edges = list(itertools.combinations(nodes, 2))
     rng = random.Random(seed or 12345)
@@ -26,6 +27,7 @@ def _generate_edge_sequence(n_vertices: int, seed: int | None = None) -> List[tu
 
 
 def run(params: SimulationParameters) -> Dict:
+    """Simulate adding edges one at a time and capture state snapshots."""
     n = max(1, params.n_vertices)
     total_possible = n * (n - 1) // 2
     target_edges = min(max(0, params.edge_count), total_possible)

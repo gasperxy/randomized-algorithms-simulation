@@ -7,6 +7,7 @@ from typing import Dict, List, Sequence, Tuple
 
 @dataclass
 class Rectangle:
+    """Simple axis-aligned rectangle used throughout the module."""
     x: float
     y: float
     width: float
@@ -33,6 +34,7 @@ class Rectangle:
 
 @dataclass
 class SimulationParameters:
+    """User inputs normalized for sampling and random generation."""
     n_rectangles: int
     size_range: Tuple[float, float]
     bounds: Tuple[float, float, float, float]
@@ -41,6 +43,7 @@ class SimulationParameters:
 
 
 def generate_rectangles(params: SimulationParameters) -> List[Rectangle]:
+    """Randomly place rectangles within the provided canvas bounds."""
     rng = random.Random(params.seed)
     x_min, x_max, y_min, y_max = params.bounds
     min_size, max_size = params.size_range
@@ -55,12 +58,14 @@ def generate_rectangles(params: SimulationParameters) -> List[Rectangle]:
 
 
 def _grid_coordinates(rectangles: Sequence[Rectangle]) -> Tuple[List[float], List[float]]:
+    # Collect all unique boundaries so we can slice the plane into cells.
     xs = sorted({rect.x for rect in rectangles} | {rect.x2 for rect in rectangles})
     ys = sorted({rect.y for rect in rectangles} | {rect.y2 for rect in rectangles})
     return xs, ys
 
 
 def decompose_disjoint(rectangles: Sequence[Rectangle]) -> Tuple[List[List[Rectangle]], float]:
+    """Slice rectangles into disjoint B_i components via grid subdivision."""
     xs, ys = _grid_coordinates(rectangles)
     components: List[List[Rectangle]] = [[] for _ in rectangles]
     total_area = 0.0
@@ -75,6 +80,8 @@ def decompose_disjoint(rectangles: Sequence[Rectangle]) -> Tuple[List[List[Recta
                 continue
             for idx, rect in enumerate(rectangles):
                 if rect.contains_cell(x1, y1, x2, y2):
+                    # Once a cell is assigned to the first covering rectangle
+                    # it becomes part of that rectangle's disjoint slice.
                     cell_rect = Rectangle(x1, y1, width, height)
                     components[idx].append(cell_rect)
                     total_area += cell_rect.area
@@ -87,6 +94,7 @@ def sample_point_in_rect(rect: Rectangle, rng: random.Random) -> Tuple[float, fl
 
 
 def run(params: SimulationParameters):
+    """Drive the Monte Carlo simulation and keep per-step history."""
     rectangles = generate_rectangles(params)
     b_components, union_area = decompose_disjoint(rectangles)
     total_rect_area = sum(rect.area for rect in rectangles)

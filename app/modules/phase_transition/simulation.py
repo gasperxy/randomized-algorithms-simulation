@@ -18,6 +18,7 @@ class SimulationParameters:
 
 
 def probability_sweep(params: SimulationParameters) -> List[float]:
+    """Generate the discrete probability samples used by the animation."""
     start = max(0.0, min(1.0, params.p_start))
     end = max(0.0, min(1.0, params.p_end))
     step = max(0.001, abs(params.p_step))
@@ -38,6 +39,7 @@ def probability_sweep(params: SimulationParameters) -> List[float]:
 
 
 def run(params: SimulationParameters) -> List[Dict]:
+    """Create a state per probability that includes the graph + stats."""
     sequence = []
     probabilities = probability_sweep(params)
     n = max(1, params.n_vertices)

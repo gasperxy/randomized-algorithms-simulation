@@ -65,6 +65,7 @@ def _color_palette() -> List[str]:
 
 
 def build_animation(rectangles, components, states, accent_color: str, frame_duration_ms: int = 250):
+    """Build the main Plotly animation plus the per-rectangle overview grid."""
     if not rectangles:
         return {"plot_html": "", "grid_html": ""}
 
@@ -192,6 +193,7 @@ def build_animation(rectangles, components, states, accent_color: str, frame_dur
         showlegend=True,
     )
 
+    # Pair the primary animation with the per-rectangle grid visualization.
     grid_html = _build_grid(rectangles, components, states, palette, frame_duration_ms)
 
     plot_html = to_html(
@@ -228,6 +230,7 @@ def _build_grid(rectangles, components, states, palette, frame_duration_ms):
     for i, rect in enumerate(rectangles):
         row = i // cols + 1
         col = i % cols + 1
+        # Draw the outline of each rectangle and the shaded disjoint cells.
         fig.add_shape(
             type="rect",
             x0=0,

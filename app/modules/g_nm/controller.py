@@ -9,6 +9,7 @@ from . import simulation, visualization
 
 @dataclass
 class GnmForm:
+    # Defaults generate a medium-sized graph so the page has an immediate animation.
     n_vertices: int = 30
     edge_count: int = 80
     playback_speed_ms: int = 400
@@ -20,6 +21,7 @@ def default_parameters() -> Dict:
 
 
 def _parse_int(value: str, fallback: int) -> int:
+    """Safe integer parser that falls back on invalid input."""
     try:
         return int(value)
     except (TypeError, ValueError):
@@ -27,6 +29,7 @@ def _parse_int(value: str, fallback: int) -> int:
 
 
 def parse_form(data: Mapping[str, str]) -> Tuple[GnmForm, Dict[str, str]]:
+    """Normalize incoming form data and clamp it to safe ranges."""
     defaults = GnmForm()
     errors: Dict[str, str] = {}
 
@@ -68,6 +71,7 @@ def run_module(form_data: Mapping[str, str], accent_color: str) -> Dict:
     if params.edge_count == 0:
         return response
 
+    # Build the simulation inputs: number of vertices plus target edge count.
     sim_params = simulation.SimulationParameters(
         n_vertices=params.n_vertices,
         edge_count=params.edge_count,

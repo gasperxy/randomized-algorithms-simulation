@@ -103,6 +103,7 @@ def build_animation(
     accent: str,
     frame_duration_ms: int = 500,
 ):
+    """Build the animated Plotly figure for the G(n, p) sweep."""
     if not states:
         return {"plot_html": ""}
 

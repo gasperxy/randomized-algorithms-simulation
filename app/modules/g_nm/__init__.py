@@ -3,7 +3,7 @@ from ..registry import ModuleMetadata
 
 MODULE_META = ModuleMetadata(
     slug="gnm",
-    name="Random Graph Edge Process (G(n, m))",
+    name="Random Graphs G(n, m)",
     description="Observe Erdős–Rényi G(n, m) graphs as edges are added one by one and relate them to the equivalent G(n, p).",
     controller=controller,
     accent_color="#10b981",
