@@ -1,0 +1,89 @@
+# Module Guide: Markov Chain Playground (First Topic — Random 2-SAT Walk)
+
+## Purpose
+- Provide a dedicated space for Markov chain experiments, mirroring the modular interface used elsewhere in the lab.
+- Share infrastructure (controllers, simulation core, visualization helpers) so additional topics like Metropolis–Hastings, random walks on graphs, or Glauber dynamics can plug in later.
+
+## Module Layout
+```
+/modules/
+  markov_random_2sat/      # First topic (Random 2-SAT Walk)
+  markov_metropolis_/...   # Future topics live alongside with same conventions
+```
+- Every topic is a full module package (controller, simulation, visualization) just like `phase_transition` or `g_nm`.
+- Home page groups these modules under a “Markov Chains” section, so visitors see a cohesive family even though each topic stands alone technically.
+- Shared helpers (clause factories, RNG utilities, base Plotly components) live in `modules/common/markov/` to reduce duplication without forcing nested “topics” folders.
+
+## Common Responsibilities
+- **Module registry** (existing pattern) exposes `{slug, name, description, controller}`; each Markov topic registers independently but uses a shared naming convention (`markov_*`) so the presentation layer can group them on the home page.
+- **Controllers** share a base mixin (optional) to normalize repeated parameters (e.g., number of steps, seed) and extend with topic-specific fields.
+- **Simulation interface** returns
+  ```
+  {
+    "states": [ { "step": int, "state": Any, "metadata": {...} }, ... ],
+    "transitions": [ { "from": ..., "to": ..., "prob": float }, ... ],  # Optional static chain definition
+    "stats": { ... },        # Topic-specific aggregates
+    "topic_metadata": { ... }
+  }
+  ```
+- **Visualization layer** receives the simulation payload and derives Plotly figures:
+  - State timeline animation (current state moving along discrete positions).
+  - Auxiliary view (e.g., clause satisfaction heat map, potential function).
+  - Summary cards for convergence metrics / stopping conditions.
+
+## Module: Markov Random 2-SAT Walk
+
+### Concept
+- Represent each assignment to variables \(x_1, \dots, x_n\) as a state summarized by the number of satisfied clauses (0 → m).
+- Start from a random assignment, choose an unsatisfied clause, flip a random variable within it (Papadimitriou’s random-walk algorithm).
+- Track the Markov chain over the coarse-grained state space “# satisfied clauses” to illustrate progress toward satisfying all clauses.
+
+### Parameters
+| Field | Default | Notes |
+| --- | --- | --- |
+| `topic` | `random_2sat` | Hidden drop-down for future topics. |
+| `n_variables` | 12 | Number of boolean variables. |
+| `n_clauses` | 40 | Clauses generated uniformly with literals sampled independently. |
+| `max_steps` | 400 | Total random-walk iterations to simulate. |
+| `restart_threshold` | `None` | Optional step count after which a new random assignment is sampled (mirrors restart heuristics). |
+| `seed` | `None` | Seeds RNG for clause generation + walk sampling. |
+
+### Simulation Outputs
+- `clauses`: concrete clause list for display / validation.
+- `state_sequence`: ordered list of steps with:
+  - `step` index.
+  - `satisfied_count` (0→m).
+  - `current_assignment` snapshot (optional toggle for download to avoid heavy payloads).
+  - `flipped_variable`, `chosen_clause`, and whether the step improved satisfaction.
+- `best_state`: max satisfied clauses seen + step index.
+- `absorbing_hit`: boolean indicating whether all clauses were satisfied, with step number.
+- `transition_histogram`: counts of transitions between satisfied-clause levels to approximate the Markov chain probabilities empirically.
+
+### Visualization Plan
+1. **State Line Animation**
+   - x-axis labeled `Satisfied Clauses (0 ... m)`.
+   - Static nodes for each possible count; sizes convey empirical stationary weight.
+   - Animated marker highlights the current state; color indicates improvement (green), neutral (blue), or regression (orange).
+   - Playback slider follows step index (0...`max_steps`).
+2. **Clause Satisfaction Heatmap**
+   - Rows = clauses, columns = steps (sampled to keep width manageable).
+   - Color encodes satisfied (1) vs unsatisfied (0).
+   - Hover reveals clause literals and whether the flipped variable participates.
+3. **Summary Cards**
+   - “Peak satisfied clauses” vs total.
+   - Steps to solution (if reached) or “not reached”.
+   - Average improvement probability vs stagnation/regression.
+
+### Extensibility Hooks
+- Module registry already used by the home page can flag any `slug` prefixed with `markov_` to appear under the Markov Chains heading, so adding `markov_metropolis_grid`, `markov_glauber_colorings`, etc. requires no template changes.
+- Visualization builder detects `topic_metadata.visual_layout` to choose the appropriate figure combination.
+- Simulation core provides helpers:
+  - RNG utilities (shared seeding with per-topic offsets).
+  - Transition counter object for building empirical chain matrices.
+  - Clause factory library for reproducible random formula generation.
+
+### Future Enhancements
+- Allow users to paste a custom CNF formula for deterministic runs.
+- Surface theoretical runtime guidance (e.g., \(O(n^2)\) expected steps under satisfiable assumption).
+- Add dual-view: assignment-level state graph (hypercube shortcuts) alongside coarse satisfied-count view.
+- Export transition histogram as CSV for further Markov-chain analysis.
