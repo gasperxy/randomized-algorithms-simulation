@@ -79,8 +79,8 @@ def build_state_animation(
             tickvals=positions,
             range=[-0.5, clause_count + 0.5],
         ),
-        yaxis=dict(showgrid=False, zeroline=False, visible=False, range=[-1, 1]),
-        height=380,
+        yaxis=dict(showgrid=False, zeroline=False, visible=False, range=[-1, 1], showline=False),
+        height=320,
         margin=dict(l=20, r=20, t=60, b=20),
         updatemenus=[
             dict(
@@ -136,43 +136,62 @@ def build_state_animation(
 
 
 def build_clause_heatmap(
-    clause_satisfaction: Sequence[Sequence[int]],
+    clause_satisfaction: Sequence[Sequence[int]] | Sequence[int],
     clause_labels: Iterable[str],
     accent: str,
+    clause_count: int | None = None,
 ):
     if not clause_satisfaction:
         return {"plot_html": ""}
 
-    steps = len(clause_satisfaction)
-    clause_count = len(clause_satisfaction[0])
-    # Transpose to clause-major ordering.
-    matrix = [[row[idx] for row in clause_satisfaction] for idx in range(clause_count)]
-    labels = list(clause_labels)
-    if len(labels) < clause_count:
-        labels = [f"C{idx + 1}" for idx in range(clause_count)]
+    first = clause_satisfaction[0]
+    if isinstance(first, (int, float)):
+        satisfied_counts = list(clause_satisfaction)  # type: ignore[arg-type]
+        clause_count = clause_count or max(satisfied_counts + [0])
+    else:
+        steps = len(clause_satisfaction)
+        clause_count = clause_count or len(first)
+        satisfied_counts = [sum(row) for row in clause_satisfaction]  # type: ignore[arg-type]
+    steps = len(satisfied_counts)
+    unsatisfied_counts = [clause_count - count for count in satisfied_counts]
 
-    heatmap = go.Heatmap(
-        z=matrix,
-        x=list(range(steps)),
-        y=labels,
-        colorscale=[(0, "#fee2e2"), (1, accent)],
-        showscale=False,
-    )
-    fig = go.Figure(data=[heatmap])
+    bars = [
+        go.Bar(
+            x=list(range(steps)),
+            y=satisfied_counts,
+            name="Satisfied",
+            marker_color="#86efac",
+            offsetgroup="s",
+            hovertemplate="Step %{x}<br>Satisfied %{y}<extra></extra>",
+        ),
+        go.Bar(
+            x=list(range(steps)),
+            y=unsatisfied_counts,
+            name="Unsatisfied",
+            marker_color="#fca5a5",
+            offsetgroup="u",
+            hovertemplate="Step %{x}<br>Unsatisfied %{y}<extra></extra>",
+        ),
+    ]
+    fig = go.Figure(data=bars)
     fig.update_layout(
         template="plotly_white",
-        height=400,
+        height=340,
         title="Clause satisfaction over time",
-        xaxis=dict(title="Step"),
-        yaxis=dict(title="Clause", automargin=True),
-        margin=dict(l=50, r=20, t=50, b=40),
+        barmode="stack",
+        bargap=0,
+        bargroupgap=0,
+        xaxis=dict(title="Step", showgrid=False, zeroline=False),
+        yaxis=dict(title="# Clauses", automargin=True, rangemode="tozero", showgrid=False, zeroline=False),
+        margin=dict(l=40, r=20, t=50, b=40),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
 
     return {
         "plot_html": to_html(
             fig,
             full_html=False,
-            include_plotlyjs=False,
+            include_plotlyjs="cdn",
             auto_play=False,
             config={"displayModeBar": False},
         )

@@ -53,10 +53,12 @@ def _clause_satisfied(assignment: Sequence[bool], clause: Clause) -> bool:
 
 def _format_literal(literal: Literal) -> Dict[str, str | int]:
     var_index, negated = literal
+    math_text = f"{'\\lnot ' if negated else ''}x_{{{var_index + 1}}}"
     return {
         "variable": var_index + 1,
         "negated": negated,
         "text": f"{'~' if negated else ''}x{var_index + 1}",
+        "math_text": math_text,
     }
 
 
@@ -64,10 +66,12 @@ def _format_clause(clause: Clause, index: int) -> Dict:
     lit_a, lit_b = clause
     literal_texts = [_format_literal(lit_a), _format_literal(lit_b)]
     text = f"({literal_texts[0]['text']} OR {literal_texts[1]['text']})"
+    math_text = f"({literal_texts[0]['math_text']} \\lor {literal_texts[1]['math_text']})"
     return {
         "index": index + 1,
         "label": f"C{index + 1}",
         "text": text,
+        "math_text": math_text,
         "literals": literal_texts,
     }
 
@@ -137,6 +141,7 @@ def run(params: SimulationParameters) -> Dict:
     ]
     clause_display = [_format_clause(clause, idx) for idx, clause in enumerate(clauses)]
     clause_texts = [clause["text"] for clause in clause_display]
+    clause_math_texts = [clause["math_text"] for clause in clause_display]
     deterministic_sat, deterministic_assignment = _solve_2sat(params.n_variables, clauses)
     assignment_display = [
         {
@@ -179,6 +184,7 @@ def run(params: SimulationParameters) -> Dict:
                 "action_label": pending_action.get("label"),
                 "action_clause": pending_action.get("clause"),
                 "action_clause_text": pending_action.get("clause_text"),
+                "action_clause_math": pending_action.get("clause_math_text"),
                 "action_variable": pending_action.get("variable"),
                 "restart_triggered": pending_action.get("label") == "restart",
                 "unsatisfied_clauses": params.n_clauses - satisfied_count,
@@ -224,6 +230,7 @@ def run(params: SimulationParameters) -> Dict:
                 "label": "walk",
                 "clause": clause_index + 1,
                 "clause_text": clause_texts[clause_index],
+                "clause_math_text": clause_math_texts[clause_index],
                 "variable": var_index + 1,
             }
 

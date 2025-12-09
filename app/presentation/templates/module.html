@@ -8,14 +8,14 @@
     <p class="text-muted">{{ module.description }}</p>
     {% if module.slug == 'phase-transition' %}
       <div class="alert alert-light border mt-3 mb-0">
-        <p class="mb-1"><strong>Erdős–Rényi G(n, p):</strong> start with n isolated vertices. Every possible edge appears independently with probability p, so sweeping p from 0 to 1 reveals phase transitions such as the birth of cycles, emergence of a giant component, and full connectivity.</p>
+        <p class="mb-1"><strong>Erdős–Rényi $G(n, p)$:</strong> start with n isolated vertices. Every possible edge appears independently with probability $p$, so sweeping $p$ from 0 to 1 reveals phase transitions such as the birth of cycles, emergence of a giant component, and full connectivity.</p>
         <p class="mb-0 text-muted small">
           Parameters: `n_vertices` sets n, `p_start`/`p_end`/`p_step` define the probability sweep, `Speed (ms)` controls animation speed, and `Seed` fixes the RNG so runs are reproducible.
         </p>
       </div>
     {% elif module.slug == 'gnm' %}
       <div class="alert alert-light border mt-3 mb-0">
-        <p class="mb-1"><strong>Erdős–Rényi G(n, m):</strong> begin with n isolated vertices and add edges in a random order until exactly m have been inserted. This exposes the discrete edge-addition process that mirrors G(n, p) at matching densities.</p>
+        <p class="mb-1"><strong>Erdős–Rényi $G(n, m)$:</strong> begin with n isolated vertices and add edges in a random order until exactly $m$ have been inserted. This exposes the discrete edge-addition process that mirrors $G(n, p)$ at matching densities.</p>
         <p class="mb-0 text-muted small">
           Parameters: choose `n_vertices`, target `edge_count` m, animation `Speed (ms)`, and optional `Seed` for reproducibility.
         </p>

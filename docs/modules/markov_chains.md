@@ -87,3 +87,37 @@
 - Surface theoretical runtime guidance (e.g., \(O(n^2)\) expected steps under satisfiable assumption).
 - Add dual-view: assignment-level state graph (hypercube shortcuts) alongside coarse satisfied-count view.
 - Export transition histogram as CSV for further Markov-chain analysis.
+
+> Module guide: see `docs/modules/markov_random_3sat.md` for the 3-SAT variant.
+
+## Module: Markov Random 3-SAT Walk
+
+### Concept
+- Randomized local search with restarts: start from a random assignment, repeat for up to \(3n\) steps—pick an unsatisfied 3-clause uniformly, flip a random variable within it, and check again. If not solved, restart with a fresh assignment.
+- Run the restart loop \(m \approx 2 r \sqrt{n} (4/3)^n\) times (capped); with repeat factor \(r\), the probability of incorrectly returning “unsatisfied” when a solution exists is bounded by \(2^{-r}\).
+- Surface how often restarts succeed, steps to solution, and how satisfied/unsatisfied counts evolve over time.
+
+### Parameters
+| Field | Default | Notes |
+| --- | --- | --- |
+| `n_variables` | 10 | Number of boolean variables. |
+| `n_clauses` | 43 | Clauses generated uniformly with 3 literals each. |
+| `error_probability` | 1.0 | Repeat factor \(r\); restarts \(m = \lceil 2 r \sqrt{n} (4/3)^n \rceil\) (capped), failure probability ≤ \(2^{-r}\). |
+| `restarts` | computed | Display only; derived from \(r\) and \(n\). |
+| `seed` | `None` | Seeds RNG for clause generation + walks. |
+
+### Outputs
+- Stacked bar chart of satisfied vs unsatisfied clauses per step across restarts.
+- Timeline table per step with restart index, clause flipped, and trend (improved/steady/regressed).
+- Restart outcomes table (steps taken, satisfied at end, success flag) plus summary stats.
+- Transition histogram over satisfied-clause levels to approximate empirical chain moves.
+
+### Implementation Notes
+- Each restart runs exactly \(3n\) steps unless a satisfying assignment is found earlier.
+- Clauses are generated with distinct variables when possible; literal signs are uniform.
+- Restart count uses \(m = \lceil 2 r \sqrt{n} (4/3)^n \rceil\) but is capped to keep runs responsive; users can override `restarts` directly.
+
+### Future Enhancements
+- Optional per-restart plots (steps to solution distribution).
+- Allow custom 3-CNF upload.
+- Expose a hard cap/slider for restarts to explore runtime vs success trade-offs.

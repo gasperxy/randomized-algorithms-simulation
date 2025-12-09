@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import asdict, dataclass
 from typing import Dict, List, Mapping, Tuple
 
@@ -7,17 +8,19 @@ from . import simulation, visualization
 
 
 @dataclass
-class Markov2SatForm:
-    n_variables: int = 12
-    n_clauses: int = 40
-    max_steps: int = 400
-    restart_threshold: int | None = None
-    playback_speed_ms: int = 400
+class Markov3SatForm:
+    n_variables: int = 10
+    n_clauses: int = 43
+    error_probability: float = 1.0  # repeat factor r
+    restarts: int | None = None
+    playback_speed_ms: int = 200
     seed: int | None = None
 
 
 def default_parameters() -> Dict:
-    return asdict(Markov2SatForm())
+    base = Markov3SatForm()
+    base.restarts = _suggest_restarts(base.n_variables, base.error_probability)
+    return asdict(base)
 
 
 def _parse_int(value, fallback: int) -> int:
@@ -27,45 +30,51 @@ def _parse_int(value, fallback: int) -> int:
         return fallback
 
 
-def parse_form(data: Mapping[str, str]) -> Tuple[Markov2SatForm, Dict[str, str]]:
-    defaults = Markov2SatForm()
+def _parse_float(value, fallback: float) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return fallback
+
+
+def _suggest_restarts(n_variables: int, error_probability: float, max_cap: int = 500) -> int:
+    suggested = math.ceil(2 * error_probability * math.sqrt(max(1, n_variables)) * ((4 / 3) ** n_variables))
+    return max(1, min(suggested, max_cap))
+
+
+def parse_form(data: Mapping[str, str]) -> Tuple[Markov3SatForm, Dict[str, str]]:
+    defaults = Markov3SatForm()
     errors: Dict[str, str] = {}
 
-    n_variables = max(2, _parse_int(data.get("n_variables", ""), defaults.n_variables))
+    n_variables = max(3, _parse_int(data.get("n_variables", ""), defaults.n_variables))
     if n_variables > 20:
-        errors["n_variables"] = "Please stay at or below 20 variables to keep the state space explorable."
+        errors["n_variables"] = "Please keep variable count at or below 20 to avoid runaway runtime."
         n_variables = 20
 
-    n_clauses = max(2, _parse_int(data.get("n_clauses", ""), defaults.n_clauses))
-    if n_clauses > 80:
-        errors["n_clauses"] = "Clause count capped at 80 for readability."
-        n_clauses = 80
+    n_clauses = max(n_variables, _parse_int(data.get("n_clauses", ""), defaults.n_clauses))
+    if n_clauses > 5 * n_variables:
+        errors["n_clauses"] = f"Clause count capped at {5 * n_variables} (5n) to keep runs responsive."
+        n_clauses = 5 * n_variables
 
-    max_steps = max(10, _parse_int(data.get("max_steps", ""), defaults.max_steps))
-    if max_steps > 1000:
-        errors["max_steps"] = "Limit iterations to 1,000 for manageable animations."
-        max_steps = 1000
+    error_probability = _parse_float(data.get("error_probability", ""), defaults.error_probability)
+    if error_probability <= 0:
+        errors["error_probability"] = "Repeat factor r must be positive."
+        error_probability = defaults.error_probability
 
-    restart_threshold_raw = data.get("restart_threshold")
-    restart_threshold = None
-    if restart_threshold_raw:
-        restart_threshold = max(1, _parse_int(restart_threshold_raw, defaults.restart_threshold or 1))
-        if restart_threshold > max_steps:
-            errors["restart_threshold"] = "Restart threshold cannot exceed the number of steps."
-            restart_threshold = max_steps
+    restarts = _suggest_restarts(n_variables, error_probability)
 
     playback_speed_ms = max(
-        100, _parse_int(data.get("playback_speed_ms", ""), defaults.playback_speed_ms)
+        50, _parse_int(data.get("playback_speed_ms", ""), defaults.playback_speed_ms)
     )
 
     seed_input = data.get("seed")
     seed = _parse_int(seed_input, defaults.seed or 0) if seed_input else None
 
-    form = Markov2SatForm(
+    form = Markov3SatForm(
         n_variables=n_variables,
         n_clauses=n_clauses,
-        max_steps=max_steps,
-        restart_threshold=restart_threshold,
+        error_probability=error_probability,
+        restarts=restarts,
         playback_speed_ms=playback_speed_ms,
         seed=seed,
     )
@@ -101,8 +110,7 @@ def run_module(form_data: Mapping[str, str], accent_color: str) -> Dict:
         "clauses": [],
         "transition_rows": [],
         "stats": {},
-        "deterministic_assignment": [],
-        "deterministic_satisfiable": None,
+        "restart_outcomes": [],
     }
     if errors:
         return response
@@ -110,17 +118,19 @@ def run_module(form_data: Mapping[str, str], accent_color: str) -> Dict:
     sim_params = simulation.SimulationParameters(
         n_variables=params.n_variables,
         n_clauses=params.n_clauses,
-        max_steps=params.max_steps,
-        restart_threshold=params.restart_threshold,
+        restarts=params.restarts or 1,
+        steps_per_restart=3 * params.n_variables,
         seed=params.seed,
     )
     sim_result = simulation.run(sim_params)
 
     heatmap_plot = visualization.build_clause_heatmap(
-        sim_result["clause_satisfaction"],
+        sim_result["satisfied_counts"],
         clause_labels=[clause["label"] for clause in sim_result["clauses"]],
         accent=accent_color,
         clause_count=sim_result["clause_count"],
+        restart_boundaries=None if sim_result["condensed"] else sim_result["restart_boundaries"],
+        condensed=sim_result["condensed"],
     )
 
     response.update(
@@ -129,9 +139,8 @@ def run_module(form_data: Mapping[str, str], accent_color: str) -> Dict:
             "state_sequence": sim_result["states"],
             "clauses": sim_result["clauses"],
             "transition_rows": _format_transition_rows(sim_result["transition_counts"]),
-            "stats": sim_result["stats"],
-            "deterministic_assignment": sim_result["deterministic_assignment"],
-            "deterministic_satisfiable": sim_result["deterministic_satisfiable"],
+            "stats": {**sim_result["stats"], "condensed": sim_result["condensed"]},
+            "restart_outcomes": sim_result["restart_outcomes"],
         }
     )
     return response
