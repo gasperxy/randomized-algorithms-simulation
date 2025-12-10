@@ -8,7 +8,7 @@
     <p class="text-muted">{{ module.description }}</p>
     <div class="alert alert-light border mt-3 mb-0">
       <p class="mb-1"><strong>Monte Carlo ε-δ intuition:</strong> we generate random rectangles, peel away overlapping portions to get disjoint \(B_i\) slices, and then estimate the union area by sampling rectangles proportional to their area and checking whether the sampled point still lies in the untouched slice.</p>
-      <p class="text-muted small mb-0">Parameters control the number of rectangles, their size range and canvas, the number of samples, playback speed, and RNG seed for reproducibility.</p>
+      <p class="text-muted small mb-0">Parameters control the number of rectangles, their size range and canvas, the number of samples, playback speed, and RNG seed for reproducibility (rectangles live in \( [0, x_{\max}] \times [0, y_{\max}] \)).</p>
     </div>
   </div>
 </div>

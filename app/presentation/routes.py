@@ -13,7 +13,8 @@ def inject_modules():
 @pages_bp.route("/")
 def home():
     modules = list_modules()
-    return render_template("home.html", modules=modules)
+    markov_modules = [module for module in modules if module.slug.startswith("markov_")]
+    return render_template("home.html", modules=modules, markov_modules=markov_modules)
 
 
 @pages_bp.route("/experiments/<slug>", methods=["GET", "POST"])

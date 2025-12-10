@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% set params = result.parameters %}
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <div>
+    <p class="text-uppercase text-muted mb-1">Markov Chains</p>
+    <h1 class="h3 mb-1">{{ module.name }}</h1>
+    <p class="text-muted mb-3">{{ module.description }}</p>
+    <div class="alert alert-light border mb-0">
+      <p class="mb-1"><strong>How it works:</strong> we generate a small random, ergodic transition matrix, start at state 1, walk for the chosen number of steps, and compare the empirical visitation frequencies to the chain’s stationary distribution.</p>
+      <p class="text-muted small mb-0">Stationary distribution is computed via \(\pi = P^T \pi\) with \(\sum \pi = 1\); empirical distribution comes from the sampled trajectory.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-header fw-semibold">Parameters</div>
+  <div class="card-body">
+    <form method="post" id="experiment-form">
+      <div class="row g-3 align-items-end">
+        <div class="col-6 col-md-2">
+          <label class="form-label">States (n)</label>
+          <input class="form-control" type="number" name="n_states" min="2" max="10" value="{{ params.n_states }}">
+          {% if result.errors.n_states %}<div class="text-danger small">{{ result.errors.n_states }}</div>{% endif %}
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label">Steps</label>
+          <input class="form-control" type="number" name="steps" min="10" max="5000" value="{{ params.steps }}">
+          {% if result.errors.steps %}<div class="text-danger small">{{ result.errors.steps }}</div>{% endif %}
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label">Start state</label>
+          <input class="form-control" type="number" name="start_state" min="1" max="{{ params.n_states }}" value="{{ params.start_state }}">
+          {% if result.errors.start_state %}<div class="text-danger small">{{ result.errors.start_state }}</div>{% endif %}
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label">Seed</label>
+          <input class="form-control" type="number" name="seed" value="{{ params.seed or '' }}">
+        </div>
+      </div>
+      <button class="btn btn-primary mt-3 d-flex align-items-center gap-2" type="submit" id="run-button">
+        <span>Run</span>
+        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="experiment-spinner"></span>
+      </button>
+    </form>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        {% if result.walk_html %}
+          {{ result.walk_html | safe }}
+        {% else %}
+          <div class="text-center text-muted py-3">Walk animation will appear here after running.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card shadow-sm h-100">
+      <div class="card-header fw-semibold">Transition matrix</div>
+      <div class="card-body">
+        {% if result.transition_matrix %}
+          <div class="table-responsive stats-scroll">
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th></th>
+                  {% for _ in result.transition_matrix[0] %}
+                    <th>S{{ loop.index }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in result.transition_matrix %}
+                  <tr>
+                    <th scope="row">S{{ loop.index }}</th>
+                    {% for val in row %}
+                      <td>{{ '%.3f'|format(val) }}</td>
+                    {% endfor %}
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted mb-0">Transition matrix will be shown after generation.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if result.stats %}
+  <div class="card shadow-sm my-4">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-6 col-md-3">
+          <div class="text-muted small">States</div>
+          <div class="fw-semibold">{{ result.stats.states }}</div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="text-muted small">Steps</div>
+          <div class="fw-semibold">{{ result.stats.steps }}</div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="text-muted small">Unique visited</div>
+          <div class="fw-semibold">{{ result.stats.unique_states }}</div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="text-muted small">Variation distance</div>
+          <div class="fw-semibold">{{ '%.3f'|format(result.stats.variation_distance) }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        {% if result.bar_html %}
+          {{ result.bar_html | safe }}
+        {% else %}
+          <div class="text-center text-muted py-4">Empirical vs stationary distribution will appear here.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        {% if result.variation_html %}
+          {{ result.variation_html | safe }}
+        {% else %}
+          <div class="text-center text-muted py-4">Variation distance over time will appear here.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm my-4">
+  <div class="card-header fw-semibold">Hitting times (from start)</div>
+  <div class="card-body">
+    {% if result.hitting_times %}
+      <div class="table-responsive stats-scroll">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th>State</th>
+              <th>First hit</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for time in result.hitting_times %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td>
+                  {% if time is none %}
+                    <span class="text-muted">Not visited</span>
+                  {% else %}
+                    {{ time }}
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-muted mb-0">Run the simulation to compute hitting times.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('experiment-form');
+    const spinner = document.getElementById('experiment-spinner');
+    const runButton = document.getElementById('run-button');
+    if (!form || !spinner || !runButton) return;
+    form.addEventListener('submit', function () {
+      spinner.classList.remove('d-none');
+      runButton.disabled = true;
+    });
+  });
+</script>
+{% endblock %}

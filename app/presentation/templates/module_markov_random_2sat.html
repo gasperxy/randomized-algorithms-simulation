@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+{% set params = result.parameters %}
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <div>
+    <p class="text-uppercase text-muted mb-1">Markov Chains</p>
+    <h1 class="h3 mb-1">{{ module.name }}</h1>
+    <p class="text-muted mb-3">{{ module.description }}</p>
+    <div class="alert alert-light border mb-0">
+      <p class="mb-1">
+        Each state summarizes a random assignment by the number of satisfied clauses (\(0 \ldots m\)). At every step the walk picks an unsatisfied clause,
+        flips a variable \(x_i\) within it, and moves to a neighboring state. The animation highlights how the chain meanders until it hits the all-satisfied state.
+      </p>
+      <p class="text-muted small mb-0">Use the optional restart threshold to periodically resample a fresh assignment and escape local minima.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-header fw-semibold">Parameters</div>
+  <div class="card-body">
+    <form method="post" id="experiment-form">
+      <div class="row g-3 align-items-end">
+        <div class="col-6 col-md-2">
+          <label class="form-label">Variables</label>
+          <input class="form-control" type="number" name="n_variables" min="2" max="20" value="{{ params.n_variables }}">
+          {% if result.errors.n_variables %}<div class="text-danger small">{{ result.errors.n_variables }}</div>{% endif %}
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label">Clauses</label>
+          <input class="form-control" type="number" name="n_clauses" min="2" max="80" value="{{ params.n_clauses }}">
+          {% if result.errors.n_clauses %}<div class="text-danger small">{{ result.errors.n_clauses }}</div>{% endif %}
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label">Steps</label>
+          <input class="form-control" type="number" name="max_steps" min="10" max="1000" value="{{ params.max_steps }}">
+          {% if result.errors.max_steps %}<div class="text-danger small">{{ result.errors.max_steps }}</div>{% endif %}
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label">Restart every</label>
+          <input class="form-control" type="number" name="restart_threshold" min="1" value="{{ params.restart_threshold or '' }}" placeholder="Optional">
+          {% if result.errors.restart_threshold %}<div class="text-danger small">{{ result.errors.restart_threshold }}</div>{% endif %}
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label">Speed (ms)</label>
+          <input class="form-control" type="number" name="playback_speed_ms" min="100" value="{{ params.playback_speed_ms }}">
+        </div>
+        <div class="col-6 col-md-1">
+          <label class="form-label">Seed</label>
+          <input class="form-control" type="number" name="seed" value="{{ params.seed or '' }}">
+        </div>
+        <div class="col-12 col-md-1">
+          <button class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2" type="submit" id="run-button">
+            <span>Run</span>
+            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="experiment-spinner"></span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        {% if result.heatmap_html %}
+          {{ result.heatmap_html | safe }}
+        {% else %}
+          <div class="text-center text-muted py-4">Clause satisfaction heatmap will appear once the simulation runs.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if result.state_sequence %}
+      <div class="card shadow-sm mt-3">
+        <div class="card-header fw-semibold">Timeline</div>
+        <div class="table-responsive stats-scroll">
+          <table class="table table-sm mb-0">
+            <thead>
+              <tr>
+                <th>Step</th>
+                <th>Satisfied</th>
+                <th>Δ</th>
+                <th>Trend</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for state in result.state_sequence %}
+                <tr>
+                  <td>{{ state.step }}</td>
+                  <td>{{ state.satisfied_count }}</td>
+                  <td>{{ state.delta }}</td>
+                  <td>
+                    {% if state.trend == 'improved' %}
+                      <span class="badge bg-success">Improved</span>
+                    {% elif state.trend == 'regressed' %}
+                      <span class="badge bg-warning text-dark">Regressed</span>
+                    {% elif state.trend == 'steady' %}
+                      <span class="badge bg-secondary">Steady</span>
+                    {% else %}
+                      <span class="badge bg-info text-dark">Start</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if state.action_label == 'walk' %}
+                      Walk via \({{ state.action_clause_math or state.action_clause_text or ('Clause\\ ' ~ state.action_clause) }}\) (flip \(x_{{ state.action_variable }}\))
+                    {% elif state.action_label == 'restart' %}
+                      Restarted assignment
+                    {% elif state.action_label == 'initial' %}
+                      Initial assignment
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header fw-semibold">Summary</div>
+      <div class="card-body">
+        {% if result.stats %}
+          {% set stats = result.stats %}
+          <dl class="row mb-3">
+            <dt class="col-6 text-muted">Clauses</dt>
+            <dd class="col-6">{{ stats.clauses }}</dd>
+            <dt class="col-6 text-muted">Variables</dt>
+            <dd class="col-6">{{ stats.variables }}</dd>
+            <dt class="col-6 text-muted">Steps recorded</dt>
+            <dd class="col-6">{{ stats.steps_recorded }}</dd>
+          </dl>
+          <div class="mb-3">
+            <div class="fw-semibold">Best progress</div>
+            <p class="mb-1">{{ stats.best_satisfied }} satisfied clauses (step {{ stats.best_step }})</p>
+            <p class="text-muted small mb-0">
+              {% if stats.solved_at is not none %}
+                Solved at step {{ stats.solved_at }} 🎉
+              {% else %}
+                Not fully satisfied within the allotted steps.
+              {% endif %}
+            </p>
+          </div>
+          <div class="mb-3">
+            <div class="fw-semibold">Transition outcomes</div>
+            <p class="mb-1 small text-muted">Improved {{ (stats.improvement_rate * 100) | round(1) }}% ·
+              Steady {{ (stats.stagnation_rate * 100) | round(1) }}% ·
+              Regressed {{ (stats.regression_rate * 100) | round(1) }}%</p>
+          </div>
+          <div class="p-3 border rounded-3 bg-light">
+            <div class="fw-semibold mb-1">Deterministic solver</div>
+            {% if result.deterministic_satisfiable %}
+              <p class="mb-1 text-success fw-semibold">Formula is satisfiable.</p>
+              {% if stats.solved_at is none %}
+                <p class="small text-muted mb-0">Random walk has not hit the satisfying assignment within the allotted steps, but the formula does have a solution.</p>
+              {% else %}
+                <p class="small text-muted mb-0">Random walk also found a solution at step {{ stats.solved_at }}.</p>
+              {% endif %}
+            {% else %}
+              <p class="mb-1 text-danger fw-semibold">Formula is unsatisfiable.</p>
+              <p class="small text-muted mb-0">No assignment satisfies every clause, so the walk will never reach the all-satisfied state.</p>
+            {% endif %}
+          </div>
+          <p class="small text-muted mb-0">Restarts triggered: {{ stats.restart_count }}</p>
+        {% else %}
+          <p class="text-muted mb-0">Run the simulation to see summary statistics.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if result.deterministic_satisfiable and result.deterministic_assignment %}
+      <div class="card shadow-sm mb-3">
+        <div class="card-header fw-semibold">Satisfying assignment</div>
+        <div class="card-body">
+          <p class="text-muted small">One deterministic assignment that satisfies all clauses:</p>
+          <div class="d-flex flex-wrap gap-2">
+            {% for literal in result.deterministic_assignment %}
+              <span class="badge bg-secondary text-white px-3 py-2">{{ literal.text }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="card shadow-sm mb-3">
+      <div class="card-header fw-semibold">Empirical transitions</div>
+      <div class="card-body">
+        {% if result.transition_rows %}
+          <div class="table-responsive stats-scroll">
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Count</th>
+                  <th>Prob.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in result.transition_rows %}
+                  <tr>
+                    <td>{{ row.from }}</td>
+                    <td>{{ row.to }}</td>
+                    <td>{{ row.count }}</td>
+                    <td>{{ (row.probability * 100) | round(1) }}%</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted mb-0">Transitions will appear once the chain runs.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold">Clauses</div>
+      <div class="card-body">
+        {% if result.clauses %}
+          <ul class="list-unstyled mb-0 small">
+            {% for clause in result.clauses %}
+              <li class="mb-2">
+                <span class="badge bg-light text-muted me-2">{{ clause.label }}</span>
+                <span class="text-nowrap">\({{ clause.math_text }}\)</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted mb-0">Clause list appears after the first run.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('experiment-form');
+    const spinner = document.getElementById('experiment-spinner');
+    const runButton = document.getElementById('run-button');
+    if (!form || !spinner || !runButton) return;
+    form.addEventListener('submit', function () {
+      spinner.classList.remove('d-none');
+      runButton.disabled = true;
+    });
+  });
+</script>
+{% endblock %}
