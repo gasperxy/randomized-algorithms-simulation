@@ -121,3 +121,28 @@
 - Optional per-restart plots (steps to solution distribution).
 - Allow custom 3-CNF upload.
 - Expose a hard cap/slider for restarts to explore runtime vs success trade-offs.
+
+## Module: Markov Chains — Basics
+
+### Concept
+- Generate a small random, ergodic Markov chain and visualize its transition graph.
+- Sample a trajectory from a chosen start state, compare empirical visitation to the stationary distribution, and report first hitting times.
+
+### Parameters
+| Field | Default | Notes |
+| --- | --- | --- |
+| `n_states` | 6 | Number of states (4–10). |
+| `steps` | 500 | Length of the sampled trajectory. |
+| `start_state` | 2 | Initial state (clamped to available states). |
+| `seed` | `None` | RNG seed for reproducible chains and paths. |
+
+### Outputs
+- Transition graph with edge thickness by probability and node sizes by stationary mass.
+- Bar chart comparing empirical visitation frequencies vs stationary distribution.
+- Variation-distance line chart showing \(\tfrac12 \sum_i |\hat{\pi}_i - \pi_i|\) over steps (empirical vs stationary).
+- Hitting-time table from the start state and the transition matrix for inspection.
+- Sample path table (first 300 steps) and summary stats (unique states visited, variation distance).
+
+### Implementation Notes
+- Transition matrix rows are sampled from positive weights, then smoothed with a small uniform mix to ensure ergodicity.
+- Stationary distribution solved via linear system \((P^T - I)\pi = 0\) with \(\sum \pi = 1\).

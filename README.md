@@ -30,6 +30,7 @@ Try it out:
 - **Edge Process (G(n, m))** – Adds random edges one by one to map m onto the equivalent G(n, p) thresholds.
 - **Monte Carlo Union of Rectangles** – Estimates the area of overlapping rectangles via sampling while displaying the disjoint \(B_i\) slices.
 - **Monte Carlo ln(2)** – Samples \(x ∈ [1,2]\), averages \(1/x\), and plots convergence toward ln(2).
+- **Markov Chains — Basics** – Generates a tiny random Markov chain, walks a sample trajectory, and compares empirical visitation to the stationary distribution.
 - **Markov Random 2-SAT Walk** – Animates Papadimitriou's random walk on a random 2-SAT instance, showing the Markov chain over satisfied-clause counts.
 - **Markov Random 3-SAT Walk** – Restart-based random walk for 3-SAT, flipping variables in unsatisfied clauses across repeated trials to target a desired failure probability.
 

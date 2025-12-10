@@ -24,6 +24,7 @@ def _load_default_modules() -> None:
     from .g_nm import MODULE_META as gnm_meta
     from .monte_carlo_union import MODULE_META as union_area_meta
     from .monte_carlo_ln2 import MODULE_META as ln2_meta
+    from .markov_intro import MODULE_META as markov_intro_meta
     from .markov_random_2sat import MODULE_META as markov_random_2sat_meta
     from .markov_random_3sat import MODULE_META as markov_random_3sat_meta
 
@@ -31,6 +32,7 @@ def _load_default_modules() -> None:
     register_module(gnm_meta)
     register_module(union_area_meta)
     register_module(ln2_meta)
+    register_module(markov_intro_meta)
     register_module(markov_random_2sat_meta)
     register_module(markov_random_3sat_meta)
 
