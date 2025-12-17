@@ -27,6 +27,7 @@ def _load_default_modules() -> None:
     from .markov_intro import MODULE_META as markov_intro_meta
     from .markov_random_2sat import MODULE_META as markov_random_2sat_meta
     from .markov_random_3sat import MODULE_META as markov_random_3sat_meta
+    from .markov_random_walks import MODULE_META as markov_random_walks_meta
 
     register_module(phase_transition_meta)
     register_module(gnm_meta)
@@ -35,6 +36,7 @@ def _load_default_modules() -> None:
     register_module(markov_intro_meta)
     register_module(markov_random_2sat_meta)
     register_module(markov_random_3sat_meta)
+    register_module(markov_random_walks_meta)
 
 
 def register_module(metadata: ModuleMetadata) -> None:
