@@ -27,6 +27,14 @@
     ]|select
   },
   {
+    "title": "Randomized Incremental Construction",
+    "description": "Incrementally build geometric structures with randomized insertion orders.",
+    "experiments": [
+      modules|selectattr("slug", "equalto", "ric-smallest-circle")|first,
+      modules|selectattr("slug", "equalto", "ric-closest-pair")|first
+    ]|select
+  },
+  {
     "title": "Markov Chains",
     "description": "Random walks on combinatorial objects with live state visualizations.",
     "experiments": markov_modules

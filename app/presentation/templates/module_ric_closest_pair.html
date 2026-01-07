@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% set params = result.parameters %}
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <div>
+    <p class="text-uppercase text-muted mb-1">Randomized Incremental Construction</p>
+    <h1 class="h3 mb-1">{{ module.name }}</h1>
+    <p class="text-muted mb-3">{{ module.description }}</p>
+    <div class="alert alert-light border mb-0">
+      <p class="mb-1"><strong>Idea:</strong> insert points in random order and keep a grid to check only nearby candidates.</p>
+      <p class="text-muted small mb-0">When the closest distance shrinks, rebuild the grid with a smaller cell size.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-header fw-semibold">Parameters</div>
+  <div class="card-body">
+    <form method="post" id="experiment-form">
+      <div class="row g-3 align-items-end">
+        <div class="col-6 col-lg-2">
+          <label class="form-label">Points</label>
+          <input class="form-control" type="number" name="n_points" min="2" max="1000" value="{{ params.n_points }}">
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label">x min</label>
+          <input class="form-control" type="number" step="0.5" name="x_min" value="{{ params.x_min }}">
+          {% if result.errors.x_min %}<div class="text-danger small">{{ result.errors.x_min }}</div>{% endif %}
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label">x max</label>
+          <input class="form-control" type="number" step="0.5" name="x_max" value="{{ params.x_max }}">
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label">y min</label>
+          <input class="form-control" type="number" step="0.5" name="y_min" value="{{ params.y_min }}">
+          {% if result.errors.y_min %}<div class="text-danger small">{{ result.errors.y_min }}</div>{% endif %}
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label">y max</label>
+          <input class="form-control" type="number" step="0.5" name="y_max" value="{{ params.y_max }}">
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label">Speed (ms)</label>
+          <input class="form-control" type="number" name="playback_speed_ms" min="100" max="1000" step="50" value="{{ params.playback_speed_ms }}">
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label">Seed</label>
+          <input class="form-control" type="number" name="seed" value="{{ params.seed or '' }}">
+        </div>
+        <div class="col-6 col-lg-2">
+          <button class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2" type="submit" id="run-button">
+            <span>Run</span>
+            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="experiment-spinner"></span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        {% if result.animation_html %}
+          {{ result.animation_html | safe }}
+        {% else %}
+          <div class="text-center text-muted py-4">Run the experiment to animate incremental updates.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        {% if result.final_html %}
+          {{ result.final_html | safe }}
+        {% else %}
+          <div class="text-center text-muted py-4">Final closest pair will appear here.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if result.summary %}
+  <div class="card shadow-sm mt-4">
+    <div class="card-header fw-semibold">Summary</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="text-muted small text-uppercase">Closest Distance</div>
+          <div>{{ '%.4f'|format(result.summary.best_distance) if result.summary.best_distance is not none else '—' }}</div>
+        </div>
+        <div class="col-md-5">
+          <div class="text-muted small text-uppercase">Closest Pair</div>
+          {% if result.summary.best_pair %}
+            <div>
+              ({{ '%.3f'|format(result.summary.best_pair[0][0]) }}, {{ '%.3f'|format(result.summary.best_pair[0][1]) }})
+              —
+              ({{ '%.3f'|format(result.summary.best_pair[1][0]) }}, {{ '%.3f'|format(result.summary.best_pair[1][1]) }})
+            </div>
+          {% else %}
+            <div>—</div>
+          {% endif %}
+        </div>
+        <div class="col-md-2">
+          <div class="text-muted small text-uppercase">Rebuilds</div>
+          <div>{{ result.summary.rebuilds }}</div>
+        </div>
+        <div class="col-md-2">
+          <div class="text-muted small text-uppercase">Total Points</div>
+          <div>{{ result.summary.n_points }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<div class="card shadow-sm mt-4">
+  <div class="card-body">
+    {% if result.rebuild_html %}
+      {{ result.rebuild_html | safe }}
+    {% else %}
+      <div class="text-center text-muted py-4">Rebuild events will appear here.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('experiment-form');
+    const spinner = document.getElementById('experiment-spinner');
+    const runButton = document.getElementById('run-button');
+    if (!form || !spinner || !runButton) return;
+    form.addEventListener('submit', function () {
+      spinner.classList.remove('d-none');
+      runButton.disabled = true;
+    });
+  });
+</script>
+{% endblock %}

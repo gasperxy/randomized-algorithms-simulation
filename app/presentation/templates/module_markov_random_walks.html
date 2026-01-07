@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% set params = result.parameters %}
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <div>
+    <p class="text-uppercase text-muted mb-1">Markov Chains</p>
+    <h1 class="h3 mb-1">{{ module.name }}</h1>
+    <p class="text-muted mb-3">{{ module.description }}</p>
+    <div class="alert alert-light border mb-0">
+      <p class="mb-1"><strong>Idea:</strong> simulate simple random walks on different graph families and compare empirical cover times with known bounds.</p>
+      <p class="text-muted small mb-0">The walk starts at a chosen vertex, moves uniformly among neighbors, and stops once every vertex is visited. Fits use \(a n^2 + b n + c\), \(a n \log n + b n + c\), or \(a (nm) + b n + c\) depending on the graph.</p>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        {% if result.graph_html %}
+          {{ result.graph_html | safe }}
+        {% else %}
+          <div class="text-center text-muted py-4">Run an experiment to animate the walk.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header fw-semibold">Parameters</div>
+      <div class="card-body">
+        <form method="post" id="experiment-form">
+          <div class="mb-3">
+            <label class="form-label">Graph type</label>
+            <select class="form-select" name="graph_type">
+              {% for key,label in {
+                "path":"Path graph (Θ(n²), start at endpoint)",
+                "complete":"Complete graph (Θ(n log n), start uniform)",
+                "lollipop_free":"Lollipop: start at free path end (Θ(n²) expected)",
+                "lollipop_bridge":"Lollipop: start at bridge end near clique (Θ(n³) expected)"
+              }.items() %}
+                <option value="{{ key }}" {% if params.graph_type == key %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            {% if result.errors.graph_type %}<div class="text-danger small">{{ result.errors.graph_type }}</div>{% endif %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Demo vertices (n)</label>
+            <input class="form-control" type="number" name="n_small" min="4" max="20" value="{{ params.n_small }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Demo steps</label>
+            <input class="form-control" type="number" name="steps_demo" min="50" max="1000" value="{{ params.steps_demo }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Start vertex</label>
+            <input class="form-control" type="number" name="start_vertex" min="1" max="{{ params.n_small }}" value="{{ params.start_vertex }}">
+            {% if result.errors.start_vertex %}<div class="text-danger small">{{ result.errors.start_vertex }}</div>{% endif %}
+          </div>
+          <hr>
+          <div class="row g-2">
+            <div class="col-4">
+              <label class="form-label">n min</label>
+              <input class="form-control" type="number" name="n_min" min="4" value="{{ params.n_min }}">
+            </div>
+            <div class="col-4">
+              <label class="form-label">n max</label>
+              <input class="form-control" type="number" name="n_max" min="{{ params.n_min }}" value="{{ params.n_max }}">
+            </div>
+            <div class="col-4">
+              <label class="form-label">Step</label>
+              <input class="form-control" type="number" name="n_step" min="1" value="{{ params.n_step }}">
+            </div>
+          </div>
+          <div class="row g-2 mt-2">
+            <div class="col-6">
+              <label class="form-label">Runs per n</label>
+              <input class="form-control" type="number" name="runs_per_n" min="1" max="20" value="{{ params.runs_per_n }}">
+            </div>
+            <div class="col-6">
+              <label class="form-label">Seed</label>
+              <input class="form-control" type="number" name="seed" value="{{ params.seed or '' }}">
+            </div>
+          </div>
+          <button class="btn btn-primary mt-3 d-flex align-items-center gap-2" type="submit" id="run-button">
+            <span>Run</span>
+            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="experiment-spinner"></span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mt-4">
+  <div class="col-lg-8">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        {% if result.cover_html %}
+          {{ result.cover_html | safe }}
+        {% else %}
+          <div class="text-center text-muted py-4">Cover-time growth will appear here.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header fw-semibold">Fit summary</div>
+      <div class="card-body">
+        {% if result.fit.coeffs %}
+          {% set a = '%.2f'|format(result.fit.coeffs[0] if result.fit.coeffs|length>0 else 0) %}
+          {% set b = '%.2f'|format(result.fit.coeffs[1] if result.fit.coeffs|length>1 else 0) %}
+          {% set c = '%.2f'|format(result.fit.coeffs[2] if result.fit.coeffs|length>2 else 0) %}
+          {% set d = '%.2f'|format(result.fit.coeffs[3] if result.fit.coeffs|length>3 else 0) %}
+          {% if params.graph_type in ['path','path_endpoint'] %}
+            <p class="mb-1"><span class="text-muted small">Fit</span><br>\( {{a}} n^2 + {{b}} n + {{c}} \)</p>
+          {% elif params.graph_type == 'complete' %}
+            <p class="mb-1"><span class="text-muted small">Fit</span><br>\( {{a}} n \log n + {{b}} n + {{c}} \)</p>
+          {% else %}
+            <p class="mb-1"><span class="text-muted small">Fit</span><br>\( {{a}} n^3 + {{b}} n^2 + {{c}} n + {{d}} \)</p>
+          {% endif %}
+          <p class="mb-1"><span class="text-muted small">R²</span><br>{{ result.fit.r2 is not none and '%.3f'|format(result.fit.r2) or '—' }}</p>
+        {% else %}
+          <p class="text-muted mb-0">Run to compute fit.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('experiment-form');
+    const spinner = document.getElementById('experiment-spinner');
+    const runButton = document.getElementById('run-button');
+    if (!form || !spinner || !runButton) return;
+    form.addEventListener('submit', function () {
+      spinner.classList.remove('d-none');
+      runButton.disabled = true;
+    });
+  });
+</script>
+{% endblock %}

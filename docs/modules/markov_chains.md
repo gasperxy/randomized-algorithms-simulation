@@ -146,3 +146,59 @@
 ### Implementation Notes
 - Transition matrix rows are sampled from positive weights, then smoothed with a small uniform mix to ensure ergodicity.
 - Stationary distribution solved via linear system \((P^T - I)\pi = 0\) with \(\sum \pi = 1\).
+- Empirical frequencies come from the sampled path; hitting times are recorded on first visit per state.
+
+## Module: Random Walks in Graphs
+
+### Concept
+- Simple random walks on graph families (path, complete, lollipop) to study cover time empirically and compare against known bounds.
+- Small instance is animated; larger instances are swept (n = 10 → 200) with multiple runs averaged.
+
+### Parameters
+| Field | Default | Notes |
+| --- | --- | --- |
+| `graph_type` | path/complete/lollipop | Choose graph family. |
+| `n_small` | 12 | Vertices in animated demo (4–20). |
+| `steps_demo` | 400 | Steps captured for the animation. |
+| `start_vertex` | 1 | Start node for demo. |
+| `n_min` / `n_max` / `n_step` | 10 / 200 / 10 | Sweep range for cover-time experiments. |
+| `runs_per_n` | 5 | Runs averaged per size. |
+| `seed` | None | Optional seed. |
+
+### Outputs
+- Animated walk on the selected small graph, coloring visited vs unvisited nodes and highlighting the current node.
+- Cover-time growth chart with mean + stdev bars and fitted curve:
+  - Path: \(a n^2 + b n + c\).
+  - Complete: \(a n \log n + b n + c\).
+  - Lollipop: \(a (n m) + b n + c\) with \(m\) edges from the constructed graph.
+- Fit summary (coefficients, \(R^2\)).
+
+### Implementation Notes
+- Graph generators: path edges \((i,i+1)\); complete connects all pairs; lollipop is a path of \(n/2\) nodes attached to a clique of \(n/2\) via a single edge.
+- Cover-time runs stop when all vertices are visited or a generous safety cap \(O(nm)\) is reached.
+- Fits solved by least squares on the chosen feature set for each graph family.
+
+## Module: Metropolis–Hastings Grid Paths
+
+### Concept
+- Sample simple start-to-goal grid paths with Metropolis–Hastings, using energy \(E = \lambda \cdot L\) to favor shorter routes or \(E = -\lambda \cdot L\) to favor longer routes.
+- Proposals are local path edits (corner flips, shortcuts, detours, endpoint wiggles) that preserve simplicity.
+- Obstacles are randomly placed but fixed; start/end are fixed.
+
+### Parameters
+| Field | Default | Notes |
+| --- | --- | --- |
+| `width` / `height` | 10 / 10 | Grid dimensions (4–20). |
+| `steps` | 200 | MH iterations; animation shows the path evolution. |
+| `lam` | 0.2 | Bias magnitude (positive). |
+| `mode` | shortest/longest | Choose whether to favor shorter or longer paths. |
+| `obstacles` | 10 | Number of blocked cells (start/end excluded). |
+| `seed` | None | Optional seed. |
+
+### Outputs
+- Animated grid with obstacles, start (green), goal (orange), and current path (blue).
+- Length trace over MH steps; markers colored by accepted/rejected moves.
+
+### Implementation Notes
+- Initial path is a shortest path (BFS) avoiding obstacles; if none exists, the run is skipped with a warning.
+- Neighbor proposals are enumerated each step; MH acceptance adjusts for neighbor counts to maintain detailed balance.
