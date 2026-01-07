@@ -177,3 +177,28 @@
 - Graph generators: path edges \((i,i+1)\); complete connects all pairs; lollipop is a path of \(n/2\) nodes attached to a clique of \(n/2\) via a single edge.
 - Cover-time runs stop when all vertices are visited or a generous safety cap \(O(nm)\) is reached.
 - Fits solved by least squares on the chosen feature set for each graph family.
+
+## Module: Metropolis–Hastings Grid Paths
+
+### Concept
+- Sample simple start-to-goal grid paths with Metropolis–Hastings, using energy \(E = \lambda \cdot L\) to favor shorter routes or \(E = -\lambda \cdot L\) to favor longer routes.
+- Proposals are local path edits (corner flips, shortcuts, detours, endpoint wiggles) that preserve simplicity.
+- Obstacles are randomly placed but fixed; start/end are fixed.
+
+### Parameters
+| Field | Default | Notes |
+| --- | --- | --- |
+| `width` / `height` | 10 / 10 | Grid dimensions (4–20). |
+| `steps` | 200 | MH iterations; animation shows the path evolution. |
+| `lam` | 0.2 | Bias magnitude (positive). |
+| `mode` | shortest/longest | Choose whether to favor shorter or longer paths. |
+| `obstacles` | 10 | Number of blocked cells (start/end excluded). |
+| `seed` | None | Optional seed. |
+
+### Outputs
+- Animated grid with obstacles, start (green), goal (orange), and current path (blue).
+- Length trace over MH steps; markers colored by accepted/rejected moves.
+
+### Implementation Notes
+- Initial path is a shortest path (BFS) avoiding obstacles; if none exists, the run is skipped with a warning.
+- Neighbor proposals are enumerated each step; MH acceptance adjusts for neighbor counts to maintain detailed balance.

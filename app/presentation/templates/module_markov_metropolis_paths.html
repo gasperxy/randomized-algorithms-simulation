@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% set params = result.parameters %}
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <div>
+    <p class="text-uppercase text-muted mb-1">Markov Chains</p>
+    <h1 class="h3 mb-1">{{ module.name }}</h1>
+    <p class="text-muted mb-3">{{ module.description }}</p>
+    <div class="alert alert-light border mb-0">
+      <p class="mb-1"><strong>Idea:</strong> Metropolis–Hastings on simple grid paths with an energy \(E=\lambda \cdot L\) to bias toward shorter routes.</p>
+      <p class="text-muted small mb-0">We propose local path edits (corner flips, shortcuts, detours, endpoint wiggles) and accept/reject with MH to preserve the target distribution.</p>
+    </div>
+  </div>
+</div>
+
+{% if result.warning %}
+  <div class="alert alert-warning">{{ result.warning }}</div>
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        {% if result.graph_html %}
+          {{ result.graph_html | safe }}
+        {% else %}
+          <div class="text-center text-muted py-4">Run an experiment to animate the MH path.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card shadow-sm h-100">
+      <div class="card-header fw-semibold">Parameters</div>
+      <div class="card-body">
+        <form method="post" id="experiment-form">
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label">Width</label>
+              <input class="form-control" type="number" name="width" min="4" max="20" value="{{ params.width }}">
+            </div>
+            <div class="col-6">
+              <label class="form-label">Height</label>
+              <input class="form-control" type="number" name="height" min="4" max="20" value="{{ params.height }}">
+            </div>
+          </div>
+          <div class="row g-2 mt-2">
+            <div class="col-6">
+              <label class="form-label">Steps</label>
+              <input class="form-control" type="number" name="steps" min="20" max="800" value="{{ params.steps }}">
+            </div>
+            <div class="col-6">
+              <label class="form-label">\(\lambda\) (bias)</label>
+              <input class="form-control" type="number" step="0.05" name="lam" min="0" value="{{ params.lam }}">
+            </div>
+          </div>
+          <div class="row g-2 mt-2">
+            <div class="col-6">
+              <label class="form-label">Mode</label>
+              <select class="form-select" name="mode">
+                <option value="shortest" {% if params.mode == 'shortest' %}selected{% endif %}>Favor shortest</option>
+                <option value="longest" {% if params.mode == 'longest' %}selected{% endif %}>Favor longest</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label">Obstacles</label>
+              <input class="form-control" type="number" name="obstacles" min="0" value="{{ params.obstacles }}">
+            </div>
+          </div>
+          <div class="row g-2 mt-2">
+            <div class="col-6">
+              <label class="form-label">Seed</label>
+              <input class="form-control" type="number" name="seed" value="{{ params.seed or '' }}">
+            </div>
+          </div>
+          <button class="btn btn-primary mt-3 d-flex align-items-center gap-2" type="submit" id="run-button">
+            <span>Run</span>
+            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="experiment-spinner"></span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mt-4">
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        {% if result.length_html %}
+          {{ result.length_html | safe }}
+        {% else %}
+          <div class="text-center text-muted py-4">Length trace will appear here.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('experiment-form');
+    const spinner = document.getElementById('experiment-spinner');
+    const runButton = document.getElementById('run-button');
+    if (!form || !spinner || !runButton) return;
+    form.addEventListener('submit', function () {
+      spinner.classList.remove('d-none');
+      runButton.disabled = true;
+    });
+  });
+</script>
+{% endblock %}
