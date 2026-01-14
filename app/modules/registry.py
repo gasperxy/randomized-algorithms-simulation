@@ -31,6 +31,7 @@ def _load_default_modules() -> None:
     from .markov_metropolis_paths import MODULE_META as markov_metropolis_paths_meta
     from .ric_smallest_enclosing_circle import MODULE_META as ric_smallest_circle_meta
     from .ric_closest_pair import MODULE_META as ric_closest_pair_meta
+    from .bloom_filter import MODULE_META as bloom_filter_meta
 
     register_module(phase_transition_meta)
     register_module(gnm_meta)
@@ -43,6 +44,7 @@ def _load_default_modules() -> None:
     register_module(markov_metropolis_paths_meta)
     register_module(ric_smallest_circle_meta)
     register_module(ric_closest_pair_meta)
+    register_module(bloom_filter_meta)
 
 
 def register_module(metadata: ModuleMetadata) -> None:
