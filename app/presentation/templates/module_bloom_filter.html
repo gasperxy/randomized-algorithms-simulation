@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% set params = result.parameters %}
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <div>
+    <p class="text-uppercase text-muted mb-1">Hash Functions</p>
+    <h1 class="h3 mb-1">{{ module.name }}</h1>
+    <p class="text-muted mb-3">{{ module.description }}</p>
+    <div class="alert alert-light border mb-0">
+      <p class="mb-1"><strong>Idea:</strong> insert items, flip k hashed bits, and watch false positives grow.</p>
+      <p class="text-muted small mb-0">Compare a uniform hash family to a biased one to see the impact on collisions.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-header fw-semibold">Parameters</div>
+  <div class="card-body">
+    <form method="post" id="experiment-form">
+      <div class="row g-3 align-items-end">
+        <div class="col-6 col-lg-2">
+          <label class="form-label">m (bits)</label>
+          <input class="form-control" type="number" name="m" min="16" max="2048" value="{{ params.m }}">
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label">k (hashes)</label>
+          <input class="form-control" type="number" name="k" min="1" max="12" value="{{ params.k }}">
+          {% if result.errors.k %}<div class="text-danger small">{{ result.errors.k }}</div>{% endif %}
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label">Inserts</label>
+          <input class="form-control" type="number" name="n_inserts" min="1" max="2000" value="{{ params.n_inserts }}">
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label">Queries</label>
+          <input class="form-control" type="number" name="n_queries" min="10" max="2000" value="{{ params.n_queries }}">
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label">Hash family</label>
+          <select class="form-select" name="hash_family">
+            <option value="multiply_shift" {% if params.hash_family == 'multiply_shift' %}selected{% endif %}>Multiply-shift</option>
+            <option value="mod_prime" {% if params.hash_family == 'mod_prime' %}selected{% endif %}>Mod prime</option>
+            <option value="biased" {% if params.hash_family == 'biased' %}selected{% endif %}>Biased</option>
+          </select>
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label">Speed (ms)</label>
+          <input class="form-control" type="number" name="playback_speed_ms" min="100" max="1000" step="50" value="{{ params.playback_speed_ms }}">
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label">Seed</label>
+          <input class="form-control" type="number" name="seed" value="{{ params.seed or '' }}">
+        </div>
+        <div class="col-6 col-lg-2">
+          <button class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2" type="submit" id="run-button">
+            <span>Run</span>
+            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="experiment-spinner"></span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        {% if result.animation_html %}
+          {{ result.animation_html | safe }}
+        {% else %}
+          <div class="text-center text-muted py-4">Run the experiment to animate insertions.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        {% if result.fp_html %}
+          {{ result.fp_html | safe }}
+        {% else %}
+          <div class="text-center text-muted py-4">False-positive rate will appear here.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if result.summary %}
+  <div class="card shadow-sm mt-4">
+    <div class="card-header fw-semibold">Summary</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="text-muted small text-uppercase">Fill Ratio</div>
+          <div>{{ '%.3f'|format(result.summary.fill_ratio) }}</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small text-uppercase">False-Positive (Empirical)</div>
+          <div>{{ '%.3f'|format(result.summary.false_positive_rate) }}</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small text-uppercase">False-Positive (Theoretical)</div>
+          <div>{{ '%.3f'|format(result.summary.theoretical_rate) }}</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small text-uppercase">Optimal k</div>
+          <div>{{ '%.2f'|format(result.summary.optimal_k) }}</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small text-uppercase">Queries per Step</div>
+          <div>{{ result.summary.n_queries }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('experiment-form');
+    const spinner = document.getElementById('experiment-spinner');
+    const runButton = document.getElementById('run-button');
+    if (!form || !spinner || !runButton) return;
+    form.addEventListener('submit', function () {
+      spinner.classList.remove('d-none');
+      runButton.disabled = true;
+    });
+  });
+</script>
+{% endblock %}
