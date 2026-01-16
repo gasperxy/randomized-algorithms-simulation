@@ -116,6 +116,14 @@ Each experiment has a dedicated guide detailing parameters, outputs, and future 
 - [Edge Process (G(n, m))](modules/g_nm.md)
 - [Monte Carlo Union of Rectangles](modules/union_area.md)
 - [Monte Carlo ln(2)](modules/ln2.md)
+- [Markov Chains — Basics](modules/markov_intro.md)
+- [Markov Chain Playground (2-SAT/3-SAT)](modules/markov_chains.md)
+- [Markov Random 3-SAT Walk](modules/markov_random_3sat.md)
+- [Markov Random Walks in Graphs](modules/markov_random_walks.md)
+- [Metropolis–Hastings Grid Paths](modules/markov_metropolis_paths.md)
+- [RIC Smallest Enclosing Circle](modules/ric_smallest_enclosing_circle.md)
+- [RIC Closest Pair Distance](modules/ric_closest_pair.md)
+- [Bloom Filter Simulation](modules/bloom_filter.md)
 
 ## Delivery Plan
 1. Scaffold Flask project structure with presentation + modules directories.
